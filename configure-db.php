@@ -60,7 +60,7 @@ if (null !== $eport) {
 # if no DB_PORT in env, no port has been configured.
 if (null === $eport && false === getenv('DB_PORT')) {
     error('The env DB_PORT does not exist. Make sure to run with "--link mypostgresinstance:DB"');
-    // script exists here.
+    // script exits here.
 }
 
 # numeric DB_PORT provided; assume port number passed directly
@@ -80,7 +80,7 @@ if (is_numeric(getenv('DB_PORT')) && false !== getenv('DB_HOST')) {
                 break;
             default:
                 error('Database on non-standard port ' . $config['DB_PORT'] . ' but env DB_TYPE not present');
-            // script exists here.
+                // script exits here.
         }
     }
 }
@@ -95,7 +95,7 @@ if (false === dbcheck($config)) {
 
     if (false === dbcheck($super)) {
         error('Database login failed. Could also not login with DB_ENV_USER and DB_ENV_PASS.');
-        // script exists here.
+        // script exits here.
     }
     debugMessage('Database login created and confirmed');
 
