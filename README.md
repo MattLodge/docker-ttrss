@@ -11,9 +11,7 @@ This repository is a fork of [this repository](https://github.com/clue/docker-tt
 * Rewrote the introduction and readme a bit.
 * Rewrote the DB configuration script.
 * Added a [License](LICENSE) (AGPL)
-
-Changes that I'm working on:
-
+* [Image builds weekly on Travis CI](https://travis-ci.com/JC5/docker-ttrss/builds) to ensure Tiny Tiny RSS is up-to-date.
 * Multi-arch support (ARM, ARM32 and AMD64)
 
 ## About Tiny Tiny RSS
