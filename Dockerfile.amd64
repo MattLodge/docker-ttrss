@@ -14,7 +14,7 @@ WORKDIR /var/www
 RUN curl -SL https://git.tt-rss.org/fox/tt-rss/archive/master.tar.gz | tar xzC /var/www --strip-components 1 \
     && chown www-data:www-data -R /var/www && cp config.php-dist config.php
 
-# expose only Apache HTTP port
+# expose only Apache HTTP port.
 EXPOSE 80
 
 # always re-configure database with current ENV when RUNning container, then monitor all services
