@@ -9,6 +9,8 @@ This repository is a fork of [this repository](https://github.com/clue/docker-tt
 * Upgrade to PHP 7.3.
 * Use Apache over nginx
 * Rewrote the introduction and readme a bit.
+* Rewrote the DB configuration script.
+* Added a [License](LICENSE) (AGPL)
 
 Changes that I'm working on:
 
@@ -30,10 +32,10 @@ Just start up a new database container:
 docker run -d --name ttrssdb nornagon/postgres
 ```
 
-And because this docker image is available as a [trusted build on the docker index](https://index.docker.io/u/clue/ttrss/), using it is as simple as launching this Tiny Tiny RSS installation linked to your fresh database:
+And because this docker image is available as an [image on Docker Hub](https://hub.docker.com/repository/docker/jc5x/ttrss), using it is as simple as launching this Tiny Tiny RSS installation linked to your fresh database:
 
 ```bash
-docker run -d --link ttrssdb:db -p 80:80 clue/ttrss
+docker run -d --link ttrssdb:db -p 80:80 jc5x/ttrss:latest
 ```
 
 Running this command for the first time will download the image automatically.
@@ -149,7 +151,7 @@ For more information check out the [official documentation](https://git.tt-rss.o
 For testing purposes it's recommended to initially start this container in foreground. This is particular useful for your initial database setup, as errors get reported to the console and further execution will halt.
 
 ```bash
-docker run -it --link tinydatabase:db -p 80:80 clue/ttrss
+docker run -it --link tinydatabase:db -p 80:80 jc5x/ttrss:latest
 ```
 
 ### Running ttrss daemonized
@@ -157,5 +159,5 @@ docker run -it --link tinydatabase:db -p 80:80 clue/ttrss
 Once you've confirmed everything works in the foreground, you can start your container in the background by replacing the `-it` argument with `-d` (daemonize). Remaining arguments can be passed just like before, the following is the recommended minimum:
 
 ```bash
-docker run -d --link tinydatabase:db -p 80:80 clue/ttrss
+docker run -d --link tinydatabase:db -p 80:80 jc5x/ttrss:latest
 ```
