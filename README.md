@@ -27,7 +27,7 @@ This section assumes you want to get started quickly, the following sections exp
 Just start up a new database container:
 
 ```bash
-docker run -d --name ttrssdb nornagon/postgres
+docker run -d --name ttrssdb postgres:latest
 ```
 
 And because this docker image is available as an [image on Docker Hub](https://hub.docker.com/repository/docker/jc5x/ttrss), using it is as simple as launching this Tiny Tiny RSS installation linked to your fresh database:
