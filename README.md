@@ -18,7 +18,7 @@ Changes that I'm working on:
 
 ## About Tiny Tiny RSS
 
-From [the official README](https://git.tt-rss.org/fox/tt-rss):*
+From [the official README](https://git.tt-rss.org/fox/tt-rss):
 
 > Web-based news feed aggregator, designed to allow you to read news from any location, while feeling as close to a real desktop application as possible.
 
