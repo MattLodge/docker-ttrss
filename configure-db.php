@@ -1,44 +1,75 @@
 #!/usr/bin/env php
 <?php
+declare(strict_types=1);
 
+/*
+ * Debug messages like this one show you the progress when you do
+ * docker logs -f <container>
+ */
 debugMessage('Start of configure-db.php');
 
-$confpath = '/var/www/config.php';
+const CONFIGPATH ='/var/www/config.php';
+$eport    = null;
 
-$config = array();
-$eport = null;
+# Initial configuration array:
+$config = [
+    'SELF_URL_PATH' => env('SELF_URL_PATH', 'http://localhost'),
+    'DB_TYPE'       => 'pgsql',
+    'DB_NAME'       => env('DB_NAME', 'ttrss'),
+    'DB_USER'       => env('DB_USER', $config['DB_NAME']),
+    'DB_PASS'       => env('DB_PASS', $config['DB_USER']),
 
-// path to ttrss
-$config['SELF_URL_PATH'] = env('SELF_URL_PATH', 'http://localhost');
+];
 
-if (getenv('DB_TYPE') !== false) {
-    $config['DB_TYPE'] = getenv('DB_TYPE');
+debugMessage(sprintf('DB_NAME is "%s", DB_USER is "%s".', $config['DB_NAME'], $config['DB_USER']));
+
+// optional extra debug message:
+//debugMessage(sprintf('DB_PASS is "%s"', $config['DB_PASS']));
+
+# If DB_TYPE is set, just use that one.
+if (false !== getenv('DB_TYPE')) {
     debugMessage(sprintf('DB_TYPE is "%s"', getenv('DB_TYPE')));
-} elseif (getenv('DB_PORT_5432_TCP_ADDR') !== false) {
-    // postgres container linked
-    $config['DB_TYPE'] = 'pgsql';
-    $eport = 5432;
-    debugMessage('Detected a linked PostgreSQL instance.');
-} elseif (getenv('DB_PORT_3306_TCP_ADDR') !== false) {
-    // mysql container linked
-    $config['DB_TYPE'] = 'mysql';
-    $eport = 3306;
-    debugMessage('Detected a linked MySQL instance.');
+    $config['DB_TYPE'] = getenv('DB_TYPE');
 }
 
-if (!empty($eport)) {
-    $config['DB_HOST'] = env('DB_PORT_' . $eport . '_TCP_ADDR');
-    $config['DB_PORT'] = env('DB_PORT_' . $eport . '_TCP_PORT');
+# Overrule if this env variable is set, because it tells us
+# a postgres container is linked.
+if (false !== getenv('DB_PORT_5432_TCP_ADDR')) {
+    debugMessage('Detected a linked PostgreSQL instance.');
+    $config['DB_TYPE'] = 'pgsql';
+    $eport             = 5432;
+
+}
+
+# Overrule if this env variable is set, because it tells us
+# a MySQL container is linked.
+if (false !== getenv('DB_PORT_3306_TCP_ADDR')) {
+    debugMessage('Detected a linked MySQL instance.');
+    // mysql container linked
+    $config['DB_TYPE'] = 'mysql';
+    $eport             = 3306;
+}
+
+# If $eport is not null, set host and port from these environment variables.
+if (null !== $eport) {
     debugMessage('Change config to use linked DB instance.');
-} elseif (getenv('DB_PORT') === false) {
-    debugMessage('The env DB_PORT does not exist. Make sure to run with "--link mypostgresinstance:DB"');
+    $config['DB_HOST'] = env(sprintf('DB_PORT_%d_TCP_ADDR', $eport));
+    $config['DB_PORT'] = env(sprintf('DB_PORT_%s_TCP_PORT', $eport));
+}
+
+# if no DB_PORT in env, no port has been configured.
+if (null === $eport && false === getenv('DB_PORT')) {
     error('The env DB_PORT does not exist. Make sure to run with "--link mypostgresinstance:DB"');
-} elseif (is_numeric(getenv('DB_PORT')) && getenv('DB_HOST') !== false) {
-    // numeric DB_PORT provided; assume port number passed directly
+    // script exists here.
+}
+
+# numeric DB_PORT provided; assume port number passed directly
+if (is_numeric(getenv('DB_PORT')) && false !== getenv('DB_HOST')) {
+    debugMessage(sprintf('DB_HOST is "%s" and DB_PORT is %d', env('DB_HOST'), env('DB_PORT')));
     $config['DB_HOST'] = env('DB_HOST');
     $config['DB_PORT'] = env('DB_PORT');
-    debugMessage(sprintf('DB_HOST is "%s" and DB_PORT is %d', env('DB_HOST'), env('DB_PORT')));
 
+    # determin DB type based on port.
     if (empty($config['DB_TYPE'])) {
         switch ($config['DB_PORT']) {
             case 3306:
@@ -48,123 +79,132 @@ if (!empty($eport)) {
                 $config['DB_TYPE'] = 'pgsql';
                 break;
             default:
-                debugMessage('Database on non-standard port ' . $config['DB_PORT'] . ' and env DB_TYPE not present');
-                error('Database on non-standard port ' . $config['DB_PORT'] . ' and env DB_TYPE not present');
+                error('Database on non-standard port ' . $config['DB_PORT'] . ' but env DB_TYPE not present');
+            // script exists here.
         }
     }
 }
+# Cannot connect to DB for some reason.
+if (false === dbcheck($config)) {
+    debugMessage('Database login failed, trying to create DB.');
 
-// database credentials for this instance
-//   database name (DB_NAME) can be supplied or detaults to "ttrss"
-//   database user (DB_USER) can be supplied or defaults to database name
-//   database pass (DB_PASS) can be supplied or defaults to database user
-$config['DB_NAME'] = env('DB_NAME', 'ttrss');
-$config['DB_USER'] = env('DB_USER', $config['DB_NAME']);
-$config['DB_PASS'] = env('DB_PASS', $config['DB_USER']);
-
-debugMessage(sprintf('DB_NAME is "%s", DB_USER is "%s".', $config['DB_NAME'], $config['DB_USER']));
-
-// optional extra debug message:
-//debugMessage(sprintf('DB_PASS is "%s"', $config['DB_PASS']));
-
-if (!dbcheck($config)) {
-    echo 'Database login failed, trying to create...' . PHP_EOL;
-    // superuser account to create new database and corresponding user account
-    //   username (SU_USER) can be supplied or defaults to "docker"
-    //   password (SU_PASS) can be supplied or defaults to username
-
-    $super = $config;
-
+    $super            = $config;
     $super['DB_NAME'] = null;
     $super['DB_USER'] = env('DB_ENV_USER', 'docker');
     $super['DB_PASS'] = env('DB_ENV_PASS', $super['DB_USER']);
-    
+
+    if (false === dbcheck($super)) {
+        error('Database login failed. Could also not login with DB_ENV_USER and DB_ENV_PASS.');
+        // script exists here.
+    }
+    debugMessage('Database login created and confirmed');
+
     $pdo = dbconnect($super);
-
-    if ($super['DB_TYPE'] === 'mysql') {
-        $pdo->exec('CREATE DATABASE ' . ($config['DB_NAME']));
-        $pdo->exec('GRANT ALL PRIVILEGES ON ' . ($config['DB_NAME']) . '.* TO ' . $pdo->quote($config['DB_USER']) . '@"%" IDENTIFIED BY ' . $pdo->quote($config['DB_PASS']));
-    } else {
-        $pdo->exec('CREATE ROLE ' . ($config['DB_USER']) . ' WITH LOGIN PASSWORD ' . $pdo->quote($config['DB_PASS']));
-        $pdo->exec('CREATE DATABASE ' . ($config['DB_NAME']) . ' WITH OWNER ' . ($config['DB_USER']));
+    if ('mysql' === $super['DB_TYPE']) {
+        $pdo->exec(sprintf('CREATE DATABASE %s', $config['DB_NAME']));
+        $pdo->exec(
+            sprintf(
+                'GRANT ALL PRIVILEGES ON %s.* TO %s@"%%" IDENTIFIED BY %s', $config['DB_NAME'], $pdo->quote($config['DB_USER']), $pdo->quote($config['DB_PASS'])
+            )
+        );
     }
-
-    unset($pdo);
-    
-    if (dbcheck($config)) {
-        echo 'Database login created and confirmed' . PHP_EOL;
-    } else {
-        error('Database login failed, trying to create login failed as well');
-    }
-}
-
-$pdo = dbconnect($config);
-try {
-    $pdo->query('SELECT 1 FROM ttrss_feeds');
-    // reached this point => table found, assume db is complete
-}
-catch (PDOException $e) {
-    echo 'Database table not found, applying schema... ' . PHP_EOL;
-    $schema = file_get_contents('schema/ttrss_schema_' . $config['DB_TYPE'] . '.sql');
-    $schema = preg_replace('/--(.*?);/', '', $schema);
-    $schema = preg_replace('/[\r\n]/', ' ', $schema);
-    $schema = trim($schema, ' ;');
-    foreach (explode(';', $schema) as $stm) {
-        $pdo->exec($stm);
+    if ('pgsql' === $super['DB_TYPE']) {
+        $pdo->exec(sprintf('CREATE ROLE %s WITH LOGIN PASSWORD %s', $config['DB_USER'], $pdo->quote($config['DB_PASS'])));
+        $pdo->exec(sprintf('CREATE DATABASE %s WITH OWNER %s', $config['DB_NAME'], $config['DB_USER']));
     }
     unset($pdo);
 }
 
-$contents = file_get_contents($confpath);
+# Can connect to DB
+if (true === dbcheck($config)) {
+    $pdo = dbconnect($config);
+    try {
+        $pdo->exec('SELECT 1 FROM ttrss_feeds');
+    } catch (PDOException $e) {
+        debugMessage('Database table not found, applying schema... ');
+        $schema = file_get_contents(sprintf('schema/ttrss_schema_%s.sql', $config['DB_TYPE']));
+        $schema = preg_replace('/--(.*?);/', '', $schema);
+        $schema = preg_replace('/[\r\n]/', ' ', $schema);
+        $schema = trim($schema, ' ;');
+        foreach (explode(';', $schema) as $stm) {
+            $pdo->exec($stm);
+        }
+        unset($pdo);
+    }
+}
+# preg replace config file.
+$contents = file_get_contents(CONFIGPATH);
 foreach ($config as $name => $value) {
     $contents = preg_replace('/(define\s*\(\'' . $name . '\',\s*)(.*)(\);)/', '$1"' . $value . '"$3', $contents);
 }
-file_put_contents($confpath, $contents);
+file_put_contents(CONFIGPATH, $contents);
 
-function env($name, $default = null)
+/**
+ * @param string $name
+ * @param null   $default
+ *
+ * @return string|null
+ */
+function env(string $name, $default = null): ?string
 {
     $v = getenv($name) ?: $default;
-    
-    if ($v === null) {
+
+    if (null === $v) {
         error('The env ' . $name . ' does not exist');
     }
-    
+
     return $v;
 }
 
-function error($text)
+/**
+ * @param string $text
+ */
+function error(string $text): void
 {
     echo 'Error: ' . $text . PHP_EOL;
     exit(1);
 }
 
-function dbconnect($config)
+/**
+ * @param array $config
+ *
+ * @return PDO
+ */
+function dbconnect(array $config): PDO
 {
-    $map = array('host' => 'HOST', 'port' => 'PORT', 'dbname' => 'NAME');
+    $map = ['host' => 'HOST', 'port' => 'PORT', 'dbname' => 'NAME'];
     $dsn = $config['DB_TYPE'] . ':';
     foreach ($map as $d => $h) {
-        if (isset($config['DB_' . $h])) {
-            $dsn .= $d . '=' . $config['DB_' . $h] . ';';
+        if (isset($config[sprintf('DB_%s', $h)])) {
+            $dsn .= $d . '=' . $config[sprintf('DB_%s', $h)] . ';';
         }
     }
-    $pdo = new \PDO($dsn, $config['DB_USER'], $config['DB_PASS']);
+    $pdo = new PDO($dsn, $config['DB_USER'], $config['DB_PASS']);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
     return $pdo;
 }
 
-function dbcheck($config)
+/**
+ * @param array $config
+ *
+ * @return bool
+ */
+function dbcheck(array $config): bool
 {
     try {
         dbconnect($config);
+
         return true;
-    }
-    catch (PDOException $e) {
+    } catch (PDOException $e) {
         return false;
     }
 }
 
-
+/**
+ * @param string $message
+ */
 function debugMessage(string $message): void {
-    echo sprintf("%s\n", $message);
+    echo sprintf('%s%s', $message, PHP_EOL);
 }
 
