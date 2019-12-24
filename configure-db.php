@@ -1,34 +1,43 @@
 #!/usr/bin/env php
 <?php
 
+debugMessage('Start of configure-db.php');
+
 $confpath = '/var/www/config.php';
 
 $config = array();
+$eport = null;
 
 // path to ttrss
 $config['SELF_URL_PATH'] = env('SELF_URL_PATH', 'http://localhost');
 
 if (getenv('DB_TYPE') !== false) {
     $config['DB_TYPE'] = getenv('DB_TYPE');
+    debugMessage(sprintf('DB_TYPE is "%s"', getenv('DB_TYPE')));
 } elseif (getenv('DB_PORT_5432_TCP_ADDR') !== false) {
     // postgres container linked
     $config['DB_TYPE'] = 'pgsql';
     $eport = 5432;
+    debugMessage('Detected a linked PostgreSQL instance.');
 } elseif (getenv('DB_PORT_3306_TCP_ADDR') !== false) {
     // mysql container linked
     $config['DB_TYPE'] = 'mysql';
     $eport = 3306;
+    debugMessage('Detected a linked MySQL instance.');
 }
 
 if (!empty($eport)) {
     $config['DB_HOST'] = env('DB_PORT_' . $eport . '_TCP_ADDR');
     $config['DB_PORT'] = env('DB_PORT_' . $eport . '_TCP_PORT');
+    debugMessage('Change config to use linked DB instance.');
 } elseif (getenv('DB_PORT') === false) {
+    debugMessage('The env DB_PORT does not exist. Make sure to run with "--link mypostgresinstance:DB"');
     error('The env DB_PORT does not exist. Make sure to run with "--link mypostgresinstance:DB"');
 } elseif (is_numeric(getenv('DB_PORT')) && getenv('DB_HOST') !== false) {
     // numeric DB_PORT provided; assume port number passed directly
     $config['DB_HOST'] = env('DB_HOST');
     $config['DB_PORT'] = env('DB_PORT');
+    debugMessage(sprintf('DB_HOST is "%s" and DB_PORT is %d', env('DB_HOST'), env('DB_PORT')));
 
     if (empty($config['DB_TYPE'])) {
         switch ($config['DB_PORT']) {
@@ -39,6 +48,7 @@ if (!empty($eport)) {
                 $config['DB_TYPE'] = 'pgsql';
                 break;
             default:
+                debugMessage('Database on non-standard port ' . $config['DB_PORT'] . ' and env DB_TYPE not present');
                 error('Database on non-standard port ' . $config['DB_PORT'] . ' and env DB_TYPE not present');
         }
     }
@@ -51,6 +61,11 @@ if (!empty($eport)) {
 $config['DB_NAME'] = env('DB_NAME', 'ttrss');
 $config['DB_USER'] = env('DB_USER', $config['DB_NAME']);
 $config['DB_PASS'] = env('DB_PASS', $config['DB_USER']);
+
+debugMessage(sprintf('DB_NAME is "%s", DB_USER is "%s".', $config['DB_NAME'], $config['DB_USER']));
+
+// optional extra debug message:
+//debugMessage(sprintf('DB_PASS is "%s"', $config['DB_PASS']));
 
 if (!dbcheck($config)) {
     echo 'Database login failed, trying to create...' . PHP_EOL;
@@ -146,5 +161,10 @@ function dbcheck($config)
     catch (PDOException $e) {
         return false;
     }
+}
+
+
+function debugMessage(string $message): void {
+    echo sprintf("%s\n", $message);
 }
 
