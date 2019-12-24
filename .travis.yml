@@ -1,0 +1,33 @@
+sudo: required
+language: bash
+
+# safelist
+branches:
+  only:
+  - develop
+  - master
+
+services:
+  - docker
+
+jobs:
+  include:
+    - dist: xenial
+      arch: amd64
+      env: ARCH=amd64
+      stage: build
+      script: ./.deploy/travis.sh
+    - dist: xenial
+      arch: amd64
+      env: ARCH=arm
+      stage: build
+      script: ./.deploy/travis.sh
+    - dist: xenial
+      arch: arm64
+      env: ARCH=arm64
+      stage: build
+      script: ./.deploy/travis.sh
+    - dist: xenial
+      arch: amd64
+      stage: manifest
+      script: ./.deploy/manifest.sh
