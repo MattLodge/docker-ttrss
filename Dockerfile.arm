@@ -1,4 +1,6 @@
-FROM php:7.3-apache
+FROM arm32v7/php:7.3-apache-stretch
+COPY tmp/qemu-arm-static /usr/bin/qemu-arm-static
+
 MAINTAINER Christian Lück <christian@lueck.tv>
 MAINTAINER James Cole <thegrumpydictator@gmail.com>
 
