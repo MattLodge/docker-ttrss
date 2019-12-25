@@ -1,1 +1,1 @@
-*/15 * * * * php /var/www/update.php --feeds
+*/15 * * * * sudo -u www-data php /var/www/update.php --feeds
