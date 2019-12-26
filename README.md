@@ -12,13 +12,21 @@ This repository is a fork of [this repository](https://github.com/clue/docker-tt
 * Rewrote the DB configuration script.
 * Added a [License](LICENSE) (AGPL)
 * [Image builds weekly on Travis CI](https://travis-ci.com/JC5/docker-ttrss/builds) to ensure Tiny Tiny RSS is up-to-date.
-* Multi-arch support (ARM, ARM32 and AMD64), so it also supports Raspberry PI's.
+* Multi-arch support (see below)
 
 ## About Tiny Tiny RSS
 
 From [the official README](https://git.tt-rss.org/fox/tt-rss):
 
 > Web-based news feed aggregator, designed to allow you to read news from any location, while feeling as close to a real desktop application as possible.
+
+## About multi arch support
+
+[The image](https://hub.docker.com/repository/docker/jc5x/ttrss) supports the following CPU architectures:
+
+* AMD64: This is plain old x86-64 and can be found in any modern PC. If you don't know what you're running yourself, it's x86-64.
+* ARM: Also known as ARM 32-bit, this is the platform of most older Raspberry PI's, up to the RPi 2 (model 1.1)
+* ARM64: It's the same ARM platform, but 64-bits. Is used in all modern Raspberry PI's.
 
 ## Quickstart
 
