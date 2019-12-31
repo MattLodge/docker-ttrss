@@ -22,7 +22,7 @@ From [the official README](https://git.tt-rss.org/fox/tt-rss):
 
 ## About multi arch support
 
-[The image](https://hub.docker.com/repository/docker/jc5x/ttrss) supports the following CPU architectures:
+[The image](https://hub.docker.com/r/jc5x/ttrss) supports the following CPU architectures:
 
 * AMD64: This is plain old x86-64 and can be found in any modern PC. If you don't know what you're running yourself, it's x86-64.
 * ARM: Also known as ARM 32-bit, this is the platform of most older Raspberry PI's, up to the RPi 2 (model 1.1)
@@ -38,7 +38,7 @@ Just start up a new database container:
 docker run -d --name ttrssdb postgres:latest
 ```
 
-And because this docker image is available as an [image on Docker Hub](https://hub.docker.com/repository/docker/jc5x/ttrss), using it is as simple as launching this Tiny Tiny RSS installation linked to your fresh database:
+And because this docker image is available as an [image on Docker Hub](https://hub.docker.com/r/jc5x/ttrss), using it is as simple as launching this Tiny Tiny RSS installation linked to your fresh database:
 
 ```bash
 docker run -d --link ttrssdb:db -p 80:80 jc5x/ttrss:latest
