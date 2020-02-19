@@ -139,6 +139,11 @@ foreach ($config as $name => $value) {
 }
 file_put_contents(CONFIGPATH, $contents);
 
+# install plugin:
+mkdir('/var/www/plugins.local/tumblr_gdpr_ua');
+file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/init.php', file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/init.php'));
+file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/pref_template.html', file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/pref_template.html'));
+
 /**
  * @param string $name
  * @param null   $default
