@@ -24,6 +24,7 @@ if [ $ARCH == "arm" ]; then
 fi
 
 LABEL=jc5x/docker-ttrss:latest-$ARCH
+echo "Going to build label $LABEL"
 docker build -t $LABEL -f Dockerfile.$ARCH .
 docker push $LABEL
 
