@@ -23,8 +23,7 @@ if [ $ARCH == "arm" ]; then
     popd
 fi
 
-# This script responds only to the MASTER branch:
-LABEL=jc5x/ttrss:latest-$ARCH
+LABEL=jc5x/docker-ttrss:latest-$ARCH
 docker build -t $LABEL -f Dockerfile.$ARCH .
 docker push $LABEL
 
