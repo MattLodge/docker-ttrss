@@ -8,6 +8,28 @@ declare(strict_types=1);
  */
 debugMessage('Start of configure-db.php');
 
+
+
+# install plugin:
+$res = mkdir('/var/www/plugins.local/tumblr_gdpr_ua', 077, true);
+if(false === $res) {
+	debugMessage('Could not create directory tumblr_gdpr_ua');
+}
+if(true === $res) {
+	$content = file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/init.php');
+	if(false === $content) {
+		debugMessage('Could not download init.php');
+	}
+	if(false !== $content) {
+		$storage = file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/init.php', $content);
+		if(false === $storage) {
+			debugMessage('Could not store init.php');
+		}
+	}
+}
+
+#file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/pref_template.html', file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/pref_template.html'));
+
 const CONFIGPATH ='/var/www/config.php';
 $eport    = null;
 
@@ -138,11 +160,6 @@ foreach ($config as $name => $value) {
     $contents = preg_replace('/(define\s*\(\'' . $name . '\',\s*)(.*)(\);)/', '$1"' . $value . '"$3', $contents);
 }
 file_put_contents(CONFIGPATH, $contents);
-
-# install plugin:
-mkdir('/var/www/plugins.local/tumblr_gdpr_ua');
-file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/init.php', file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/init.php'));
-file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/pref_template.html', file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/pref_template.html'));
 
 /**
  * @param string $name
