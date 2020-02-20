@@ -23,7 +23,7 @@ if [ $ARCH == "arm" ]; then
     popd
 fi
 
-LABEL=jc5x/docker-ttrss:latest-$ARCH
+LABEL=jc5x/ttrss:latest-$ARCH
 echo "Going to build label $LABEL"
 docker build -t $LABEL -f Dockerfile.$ARCH .
 echo "Going to push label $LABEL"
