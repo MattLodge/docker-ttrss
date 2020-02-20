@@ -16,6 +16,7 @@ if(false === $res) {
 	debugMessage('Could not create directory tumblr_gdpr_ua');
 }
 if(true === $res) {
+	// init.php
 	$content = file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/init.php');
 	if(false === $content) {
 		debugMessage('Could not download init.php');
@@ -26,9 +27,18 @@ if(true === $res) {
 			debugMessage('Could not store init.php');
 		}
 	}
+	// pref_template
+	$content = file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/pref_template.html');
+	if(false === $content) {
+		debugMessage('Could not download pref_template.html');
+	}
+	if(false !== $content) {
+		$storage = file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/pref_template.html', $content);
+		if(false === $storage) {
+			debugMessage('Could not store pref_template.html');
+		}
+	}
 }
-
-#file_put_contents('/var/www/plugins.local/tumblr_gdpr_ua/pref_template.html', file_get_contents('https://raw.githubusercontent.com/hkockerbeck/ttrss-tumblr-gdpr-ua/master/pref_template.html'));
 
 const CONFIGPATH ='/var/www/config.php';
 $eport    = null;
